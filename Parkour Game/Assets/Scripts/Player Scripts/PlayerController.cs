@@ -15,6 +15,9 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private TargetJoint2D targetJoint2D; // pull grapple
     [SerializeField] private DistanceJoint2D distanceJoint2D; // swing grapple
+    
+    [SerializeField] private LineRenderer lineRenderer; // line renderer for the grapple
+
 
     private float movement; // where the player is trying to move
 
@@ -33,19 +36,37 @@ public class PlayerController : MonoBehaviour
 
         if(Input.GetMouseButtonDown(0)) {
             // if the player presses right click
-            Grapple(); // we grapple
+            SwingGrapple(); // we grapple
         }
+
+        if(Input.GetKey(KeyCode.LeftShift)) {
+            // if the player presses down left shift
+            SwitchToPullGrapple(); // we switch to pull grapple
+        }
+
+        if(Input.GetKey(KeyCode.LeftShift) == false) {
+            // if the player realeases the left shift
+            SwitchToSwingGrapple(); // we switch the pull grapple to swing grapple
+        }
+
         if(Input.GetMouseButtonUp(0)) {
             // if the player realeases the right click
             distanceJoint2D.enabled = false; // we disable the distance joint
             targetJoint2D.enabled = false; // and the target joint
+            isGrappeling = false; // we are not grappleing anymore
+
+            lineRenderer.enabled = false; // disable the line renderer
         }
+
+        SetLineRendererPos();
 
         Debug.DrawLine(transform.position, transform.position + (Vector3.down * jumpBuffer), Color.red, 0.001f); // draw the jump ray
 
         print(maxSpeed + " : " + minSpeed); // for debugging
 
         SetIncreasingSpeed(); // set the increasing speed bool
+
+        print(increasingSpeed);
 
         if(distanceJoint2D.enabled || targetJoint2D.enabled) isGrappeling = true; // if the distance or target joints are enabled, we are grappleing
 
@@ -92,7 +113,7 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    private void Grapple() {
+    private void SwingGrapple() {
         // this will make a grapple that the player can swing from
 
         Vector2 mouseDir = (Vector2) (Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position).normalized; // get the direction of the mouse
@@ -106,7 +127,40 @@ public class PlayerController : MonoBehaviour
 
         distanceJoint2D.enabled = true; // we enable the distance joint
 
-
         distanceJoint2D.connectedAnchor = hit.point; // we set the anchor to the positions of the collision of the ray
+
+        distanceJoint2D.distance = Vector2.Distance(transform.position, hit.point); // set the distance of the joint because we can't have it auto set
+
+        lineRenderer.enabled = true; // enable the line renderer
+        
+        lineRenderer.SetPosition(1, hit.point); // set the line renderer pos
+    }
+
+    private void SwitchToPullGrapple() {
+        // this will change the distance joint in for a target joint
+
+        if(distanceJoint2D.enabled == false) return; // if the distance joint is not enabled we return
+
+        targetJoint2D.enabled = true; // we enable the target joint
+        distanceJoint2D.enabled = false; // and disable the distance joint
+
+        targetJoint2D.target = distanceJoint2D.connectedAnchor; // we set the target of the target joint to the position of the distance joint anchor
+    }
+
+    private void SwitchToSwingGrapple() {
+        // this will chagne the target joint to a distance joint
+
+        if(targetJoint2D.enabled == false) return; // if the target joint is not enabled we return
+
+        targetJoint2D.enabled = false; // disable the target joint
+        distanceJoint2D.enabled = true; // we enable the distance joint
+
+        // we wont change the anchor
+    }
+
+    private void SetLineRendererPos() {
+        // this will set the line renderer pos to the current player position
+
+        lineRenderer.SetPosition(0, transform.position); // set the position of the line renderer
     }
 }
