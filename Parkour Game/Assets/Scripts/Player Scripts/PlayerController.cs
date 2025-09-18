@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
     
     [SerializeField] private LineRenderer lineRenderer; // line renderer for the grapple
 
+    private SpriteRenderer spriteRenderer; // the sprite renderer to control where the character is facing
+
 
     private float movement; // where the player is trying to move
 
@@ -26,9 +28,14 @@ public class PlayerController : MonoBehaviour
     private bool increasingSpeed = false; // this will controll whether the player can increase their max speed or not
     private bool isGrappeling = false; // this will indecate if the player is grappleing or not
 
+    void Start() {
+        spriteRenderer = gameObject.GetComponent<SpriteRenderer>(); // get the sprite renderer
+    }
+
     void Update()
     {
         movement = Input.GetAxisRaw("Horizontal"); // get the direction the player is moving
+        FlipCharacter(); // flip the player based on what direction they are moving in
 
         if(Input.GetKeyDown(KeyCode.Space)) {// if the player hits space
             Jump(); // we jump   
@@ -62,11 +69,11 @@ public class PlayerController : MonoBehaviour
 
         Debug.DrawLine(transform.position, transform.position + (Vector3.down * jumpBuffer), Color.red, 0.001f); // draw the jump ray
 
-        print(maxSpeed + " : " + minSpeed); // for debugging
+        //print(maxSpeed + " : " + minSpeed); // for debugging
 
         SetIncreasingSpeed(); // set the increasing speed bool
 
-        print(increasingSpeed);
+        //print(increasingSpeed); // for debugging
 
         if(distanceJoint2D.enabled || targetJoint2D.enabled) isGrappeling = true; // if the distance or target joints are enabled, we are grappleing
 
@@ -162,5 +169,13 @@ public class PlayerController : MonoBehaviour
         // this will set the line renderer pos to the current player position
 
         lineRenderer.SetPosition(0, transform.position); // set the position of the line renderer
+    }
+
+    private void FlipCharacter() {
+        if(rb.linearVelocityX < -0.1f) {
+            spriteRenderer.flipX = true;
+        } else if(rb.linearVelocityX > 0.1f)  {
+            spriteRenderer.flipX = false;
+        }
     }
 }
